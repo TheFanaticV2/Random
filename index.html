@@ -6,12 +6,12 @@
 <body><main class="wrap"><div class="header"><div><h1>🎲 สุ่มแบ่งกลุ่ม <span class="en">RandomGroups</span></h1><p class="lead">ลงทะเบียนผ่าน QR Code <span class="en">Scan, register, and let the organizer draw.</span></p></div><span class="pill" id="connection" role="status">Connecting…</span></div>
 <div class="grid"><section class="card"><h2>👤 ลงทะเบียน <span class="en">Participant registration</span></h2><form id="registration"><label for="name">ชื่อของคุณ <span class="en">Your name</span></label><input id="name" maxlength="40" placeholder="พิมพ์ชื่อ / Enter your name" autocomplete="name" required><button id="register" disabled>✓ ลงทะเบียน <span class="en">Register</span></button><button type="button" class="secondary" id="leave" disabled>ยกเลิก <span class="en">Cancel my registration</span></button></form><div id="personal" class="status muted" aria-live="polite">กำลังเชื่อมต่อ / Connecting…</div><p class="muted">รายชื่อและผลกลุ่มดูได้เฉพาะผู้จัดงาน <span class="en">Only the organizer can see participants and group results. Keep using this browser to manage your registration.</span></p></section>
 <section class="card"><h2>📱 สแกนเพื่อเข้าร่วม <span class="en">Scan to join</span></h2><img class="qr" id="qr" alt="QR code to register for RandomGroups" width="220" height="220"><a id="pageLink" href="https://thefanaticv2.github.io/Random/">https://thefanaticv2.github.io/Random/</a><p><button class="secondary" id="copyLink">คัดลอกลิงก์ <span class="en">Copy registration link</span></button></p></section>
-<section class="card full"><details id="organizer"><summary>🔐 ผู้จัดงาน <span class="en">Organizer controls</span></summary><div id="loginArea"><p class="muted">เฉพาะบัญชีผู้จัดงานที่ได้รับอนุญาต <span class="en">Sign in with your authorized Google account.</span></p><button id="login">เข้าสู่ระบบด้วย Google <span class="en">Sign in with Google</span></button></div><p id="accountStatus" class="muted"></p><button id="logout" class="secondary" hidden>ออกจากระบบ <span class="en">Sign out</span></button>
-<div id="adminArea" hidden><h2>👥 ผู้เข้าร่วม <span class="en">Private participant list</span></h2><div class="count"><span id="count">0</span> / 30</div><div class="bar"><div class="fill" id="fill"></div></div><div id="names" class="names"></div><p id="eventStatus" class="muted"></p><button id="draw" disabled>🎲 สุ่มแบ่งกลุ่ม <span class="en">Draw 6 groups of 5</span></button><button id="reopen" class="secondary">เปิดลงทะเบียนอีกครั้ง <span class="en">Reopen registration and clear results</span></button><h2 style="margin-top:24px">🏆 ผลการแบ่งกลุ่ม <span class="en">Private group results</span></h2><div id="results" class="groups"></div><button id="copyResults" class="secondary" disabled>คัดลอกผล <span class="en">Copy results</span></button></div></details></section></div>
+<section class="card full"><details id="organizer"><summary>🔐 ผู้จัดงาน <span class="en">Organizer controls</span></summary><div id="loginArea"><form id="adminLogin"><label for="username">ชื่อผู้ใช้ / Login</label><input id="username" autocomplete="username" required placeholder="Login"><label for="password">รหัสผ่าน / Password</label><input id="password" type="password" autocomplete="current-password" required placeholder="Password"><button id="login">เข้าสู่ระบบ <span class="en">Sign in</span></button></form></div><p id="accountStatus" class="muted"></p><button id="logout" class="secondary" hidden>ออกจากระบบ <span class="en">Sign out</span></button>
+<div id="adminArea" hidden><h2>👥 ผู้เข้าร่วม <span class="en">Private participant list</span></h2><div class="count"><span id="count">0</span> / 30</div><div class="bar"><div class="fill" id="fill"></div></div><div id="names" class="names"></div><form id="manualRegistration"><label for="manualName">เพิ่มชื่อด้วยตนเอง / Add a participant manually</label><input id="manualName" maxlength="40" required placeholder="Participant name"><button id="manualAdd">➕ เพิ่มชื่อ / Add name</button></form><p id="eventStatus" class="muted"></p><button id="draw" disabled>🎲 สุ่มแบ่งกลุ่ม <span class="en">Draw 6 groups of 5</span></button><button id="reopen" class="secondary">เปิดลงทะเบียนอีกครั้ง <span class="en">Reopen registration and clear results</span></button><h2 style="margin-top:24px">🏆 ผลการแบ่งกลุ่ม <span class="en">Private group results</span></h2><div id="results" class="groups"></div><button id="copyResults" class="secondary" disabled>คัดลอกผล <span class="en">Copy results</span></button></div></details></section></div>
 <div id="message" role="status" aria-live="polite"></div><p class="muted">🔒 ชื่อของคุณถูกเก็บไว้เพื่อจัดกลุ่ม และดูได้เฉพาะคุณกับผู้จัดงาน <span class="en">Your name is stored for this event. Only you and the organizer can read your registration.</span></p><noscript>This page needs JavaScript to register.</noscript></main>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
-import { getAuth, onAuthStateChanged, signInAnonymously, GoogleAuthProvider, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
+import { getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
 import { getFirestore, doc, collection, getDoc, getDocs, onSnapshot, runTransaction, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 
 const app = initializeApp({apiKey:'AIzaSyD_3rB3hymJYy37zY3tg3_wwJNEOxrjOUo',authDomain:'randomgroups-eed75.firebaseapp.com',projectId:'randomgroups-eed75',appId:'1:13294237997:web:f63bf842f661166c1cfba4'});
@@ -25,13 +25,13 @@ const message=(text,error=false)=>{$('message').textContent=text;$('message').cl
 function errorMessage(e){ console.error(e); return e.code==='permission-denied'?'Access denied. Registration may be closed, full, or this account is not authorized.':e.code==='auth/popup-blocked'?'Allow the Google sign-in popup, then try again.':e.code==='auth/popup-closed-by-user'?'Sign-in cancelled.':e.message||'Connection error. Please retry.'; }
 function render(){
   $('adminArea').hidden=!state.admin; $('loginArea').hidden=state.admin; $('logout').hidden=!state.user||state.user.isAnonymous;
-  $('accountStatus').textContent=state.admin?'✓ Organizer connected':state.user&&!state.user.isAnonymous?'This Google account is not authorized as organizer.':'';
+  $('accountStatus').textContent=state.admin?'✓ Organizer connected':state.user&&!state.user.isAnonymous?'This account is not authorized as organizer.':'';
   $('register').disabled=!state.ready||state.busy||!!state.own||!state.event?.open||state.event.count>=30;
   $('leave').disabled=!state.ready||state.busy||!state.own||!state.event?.open;
   $('personal').textContent=state.own?'✓ ลงทะเบียนแล้ว / Registered: '+state.own.name:!state.ready?'กำลังเชื่อมต่อ / Connecting…':!state.event?'Registration is not open yet.':!state.event.open?'ปิดรับลงทะเบียน / Registration closed':state.event.count>=30?'เต็มแล้ว / All places filled':'ยังไม่ได้ลงทะเบียน / Enter your name to register';
   $('draw').disabled=!state.admin||state.busy||state.people.length!==30||!!state.groups.length;
   $('reopen').disabled=!state.admin||state.busy||!!state.event?.open;
-  $('copyResults').disabled=!state.groups.length;
+  $('copyResults').disabled=!state.groups.length; $('manualAdd').disabled=!state.admin||state.busy||!state.event?.open||state.people.length>=30;
   $('count').textContent=state.people.length; $('fill').style.width=state.people.length/30*100+'%';
   $('eventStatus').textContent=state.event?.open?'Registration open · exactly 30 participants required':'Registration closed';
   $('names').replaceChildren(...state.people.map(p=>{const e=document.createElement('span');e.className='chip';e.textContent=p.name;return e;}));
@@ -43,9 +43,9 @@ onAuthStateChanged(auth,async user=>{
   Object.assign(state,{user,admin:false,own:null,event:null,people:[],groups:[],ready:false});render();
   if(!user){try{await signInAnonymously(auth);}catch(e){$('connection').textContent='Connection failed';message(errorMessage(e),true);}return;}
   try{
-    const access=user.isAnonymous?null:await getDoc(doc(db,'admins',user.uid));
+    
     if(epoch!==generation)return;
-    state.admin=!!access?.exists()&&user.emailVerified&&user.providerData.some(p=>p.providerId==='google.com');
+    state.admin=user.email==='jayjay@randomgroups-eed75.firebaseapp.com'&&user.providerData.some(p=>p.providerId==='password');
     if(state.admin){
       await runTransaction(db,async tx=>{const e=await tx.get(eventRef);if(!e.exists())tx.set(eventRef,{count:0,open:true});});
       if(epoch!==generation)return;
@@ -67,7 +67,7 @@ $('registration').onsubmit=e=>{e.preventDefault();action(async()=>{
 $('leave').onclick=()=>{if(!confirm('ยกเลิกการลงทะเบียน? / Cancel your registration?'))return;action(async()=>{
   const own=doc(parts,state.user.uid);await runTransaction(db,async tx=>{const [event,existing]=await Promise.all([tx.get(eventRef),tx.get(own)]);if(!existing.exists())return;if(!event.data().open)throw Error('The draw is locked. Ask the organizer.');tx.delete(own);tx.update(eventRef,{count:event.data().count-1});});message('Registration cancelled.');
 });};
-$('login').onclick=()=>action(async()=>{const provider=new GoogleAuthProvider();provider.setCustomParameters({prompt:'select_account'});await signInWithPopup(auth,provider);});
+$('adminLogin').onsubmit=e=>{e.preventDefault();action(async()=>{if($('username').value.trim().toLowerCase()!=='jayjay')throw Error('Invalid login.');await signInWithEmailAndPassword(auth,'jayjay@randomgroups-eed75.firebaseapp.com',$('password').value);$('password').value='';});};
 $('logout').onclick=()=>action(async()=>{await signOut(auth);message('Signed out.');});
 $('draw').onclick=()=>action(async()=>{
   if(!state.admin)return;
@@ -85,5 +85,7 @@ $('copyResults').onclick=()=>action(async()=>{await navigator.clipboard.writeTex
 window.addEventListener('offline',()=>{$('connection').textContent='🔴 Offline';state.ready=false;render();});
 window.addEventListener('online',()=>location.reload());
 render();
+
+$('manualRegistration').onsubmit=e=>{e.preventDefault();action(async()=>{const name=$('manualName').value.trim().replace(/\s+/g,' ');if(!name||name.length>40)throw Error('Enter a name of 1–40 characters.');const participant=doc(parts);await runTransaction(db,async tx=>{const event=await tx.get(eventRef);if(!event.data().open||event.data().count>=30)throw Error('Registration closed or full.');tx.set(participant,{name,createdAt:serverTimestamp()});tx.update(eventRef,{count:event.data().count+1});});$('manualName').value='';message('Participant added.');});};
 
 </script></body></html>
