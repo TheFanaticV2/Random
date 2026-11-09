@@ -1,6 +1,48 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+  function signed() {return request.auth != null;}
+  function siamAdmin() {return signed() && request.auth.uid == '0X3GhtVwLWPgMEYWhKh4UU4y0k33';}
+  function live() {return get(/databases/$(database)/documents/siamsi/main).data;}
+  match /siamsi/main {
+   allow get: if signed();
+   allow create: if signed() && request.resource.data == {'open':true,'round':1};
+   allow update: if siamAdmin();
+   match /participants/{uid} {
+    allow get: if siamAdmin() || (signed() && request.auth.uid == uid);
+    allow list: if siamAdmin();
+    allow create: if (siamAdmin() || (signed() && request.auth.uid == uid)) && live().open
+     && request.resource.data.keys().hasOnly(['name','group','slot','nameKey','round','createdAt'])
+     && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60
+     && request.resource.data.group is int && request.resource.data.group >= 1 && request.resource.data.group <= 6
+     && request.resource.data.slot.matches('g'+string(request.resource.data.group)+'-[1-5]')
+     && request.resource.data.round == live().round && request.resource.data.createdAt == request.time
+     && !exists(/databases/$(database)/documents/siamsi/main/slots/$(request.resource.data.slot))
+     && getAfter(/databases/$(database)/documents/siamsi/main/slots/$(request.resource.data.slot)).data.uid == uid
+     && !exists(/databases/$(database)/documents/siamsi/main/names/$(request.resource.data.nameKey))
+     && getAfter(/databases/$(database)/documents/siamsi/main/names/$(request.resource.data.nameKey)).data.uid == uid;
+    allow delete: if siamAdmin();
+   }
+   match /slots/{slot} {
+    allow get: if signed();
+    allow list, delete: if siamAdmin();
+    allow create: if signed() && live().open && request.resource.data.keys().hasOnly(['uid','group','position'])
+     && (siamAdmin() || request.resource.data.uid == request.auth.uid)
+     && request.resource.data.group is int && request.resource.data.group >= 1 && request.resource.data.group <= 6
+     && request.resource.data.position is int && request.resource.data.position >= 1 && request.resource.data.position <= 5
+     && slot == 'g'+string(request.resource.data.group)+'-'+string(request.resource.data.position)
+     && getAfter(/databases/$(database)/documents/siamsi/main/participants/$(request.resource.data.uid)).data.slot == slot;
+   }
+   match /names/{key} {
+    allow get: if signed();
+    allow list, delete: if siamAdmin();
+    allow create: if signed() && live().open && request.resource.data.keys().hasOnly(['uid'])
+     && (siamAdmin() || request.resource.data.uid == request.auth.uid)
+     && getAfter(/databases/$(database)/documents/siamsi/main/participants/$(request.resource.data.uid)).data.nameKey == key;
+   }
+  }
+
     function signedIn() { return request.auth != null; }
     function admin() {
       return signedIn() && request.auth.token.firebase.sign_in_provider == 'password'
